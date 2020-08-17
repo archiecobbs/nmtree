@@ -229,9 +229,9 @@ statf(FTSENT *p)
 		output(&indent, "mode=%#o", p->fts_statp->st_mode & MBITS);
 	if (keys & F_DEV &&
 	    (S_ISBLK(p->fts_statp->st_mode) || S_ISCHR(p->fts_statp->st_mode)))
-		output(&indent, "device=%#x", p->fts_statp->st_rdev);
+		output(&indent, "device=%#lx", (unsigned long)p->fts_statp->st_rdev);
 	if (keys & F_NLINK && p->fts_statp->st_nlink != 1)
-		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
+		output(&indent, "nlink=%lu", (unsigned long)p->fts_statp->st_nlink);
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
 		output(&indent, "size=%lld", (long long)p->fts_statp->st_size);
 #if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
@@ -323,7 +323,9 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 	gid_t sgid;
 	uid_t suid;
 	mode_t smode;
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	u_long sflags = 0;
+#endif
 	const char *name;
 	gid_t savegid;
 	uid_t saveuid;

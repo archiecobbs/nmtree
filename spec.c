@@ -377,16 +377,15 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			printf("mode=%#o ", cur->st_mode);
 		if (MATCHFLAG(F_DEV) &&
 		    (cur->type == F_BLOCK || cur->type == F_CHAR))
-			printf("device=%#x ", cur->st_rdev);
+			printf("device=%#lx ", (unsigned long)cur->st_rdev);
 		if (MATCHFLAG(F_NLINK))
-			printf("nlink=%d ", cur->st_nlink);
+			printf("nlink=%ld ", (unsigned long)cur->st_nlink);
 		if (MATCHFLAG(F_SLINK))
 			printf("link=%s ", vispath(cur->slink));
 		if (MATCHFLAG(F_SIZE))
 			printf("size=%lld ", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			printf("time=%ld.%ld ", (long)cur->st_mtimespec.tv_sec,
-			    cur->st_mtimespec.tv_nsec);
+			printf("time=%ld.%ld ", (long)cur->st_mtimespec.tv_sec, (long)cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
 			printf("cksum=%lu ", cur->cksum);
 		if (MATCHFLAG(F_MD5))

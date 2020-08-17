@@ -160,7 +160,10 @@ do {									\
 int
 compare(NODE *s, FTSENT *p)
 {
-	uint32_t len, val, flags;
+	uint32_t len, val;
+#if HAVE_STRUCT_STAT_ST_FLAGS
+	uint32_t flags;
+#endif
 	int fd, label;
 	const char *cp, *tab;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
@@ -223,8 +226,8 @@ typeerr:		LABEL;
 	    (s->type == F_BLOCK || s->type == F_CHAR) &&
 	    s->st_rdev != p->fts_statp->st_rdev) {
 		LABEL;
-		printf("%sdevice (%#x, %#x",
-		    tab, s->st_rdev, p->fts_statp->st_rdev);
+		printf("%sdevice (%#lx, %#lx",
+		    tab, (unsigned long)s->st_rdev, (unsigned long)p->fts_statp->st_rdev);
 		if (uflag) {
 			if ((unlink(p->fts_accpath) == -1) ||
 			    (mknod(p->fts_accpath,

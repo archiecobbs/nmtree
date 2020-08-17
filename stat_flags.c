@@ -141,8 +141,10 @@ flags_to_string(u_long flags, const char *def)
 int
 string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 {
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	int clear;
 	char *string, *p;
+#endif
 
 	if (setp)
 		*setp = 0;
