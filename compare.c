@@ -333,20 +333,10 @@ typeerr:		LABEL;
 		struct timeval tv[2];
 		struct stat *ps = p->fts_statp;
 		time_t smtime = s->st_mtimespec.tv_sec;
-
-#if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
-		time_t pmtime = ps->st_mtimespec.tv_sec;
+		time_t pmtime = ps->st_mtim.tv_sec;
 
 		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
-		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtimespec);
-#else
-		time_t pmtime = (time_t)ps->st_mtime;
-
-		tv[0].tv_sec = smtime;
-		tv[0].tv_usec = 0;
-		tv[1].tv_sec = pmtime;
-		tv[1].tv_usec = 0;
-#endif
+		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtim);
 
 		if (tv[0].tv_sec != tv[1].tv_sec ||
 		    tv[0].tv_usec != tv[1].tv_usec) {
