@@ -236,11 +236,11 @@ statf(FTSENT *p)
 		output(&indent, "size=%lld", (long long)p->fts_statp->st_size);
 #if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
 	if (keys & F_TIME)
-		output(&indent, "time=%ld.%ld",
+		output(&indent, "time=%ld.%09ld",
 		    (long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
 #else
-		output(&indent, "time=%ld.%ld",
+		output(&indent, "time=%ld.%09ld",
 		    p->fts_statp->st_mtime, 0);
 #endif
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {

@@ -385,7 +385,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 		if (MATCHFLAG(F_SIZE))
 			printf("size=%lld ", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			printf("time=%ld.%ld ", (long)cur->st_mtimespec.tv_sec, (long)cur->st_mtimespec.tv_nsec);
+			printf("time=%ld.%09ld ", (long)cur->st_mtimespec.tv_sec, (long)cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
 			printf("cksum=%lu ", cur->cksum);
 		if (MATCHFLAG(F_MD5))
