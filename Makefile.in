@@ -4,7 +4,7 @@ srcdir=		@srcdir@
 
 prefix=		@prefix@
 exec_prefix=	@exec_prefix@
-sbindir=	@sbindir@
+bindir=		@bindir@
 mandir=		@mandir@
 
 man8dir=	$(mandir)/man8
@@ -40,7 +40,7 @@ distclean: clean
 	rm -f configure.lineno config.log
 
 install:
-	$(INSTALL) -m 755 -d ${DESTDIR}$(sbindir)
+	$(INSTALL) -m 755 -d ${DESTDIR}$(bindir)
 	$(INSTALL) -m 755 -d ${DESTDIR}$(man8dir)
-	$(INSTALL) $(PROG) ${DESTDIR}$(sbindir)
+	$(INSTALL) $(PROG) ${DESTDIR}$(bindir)
 	$(INSTALL) -m 444 mtree.8 ${DESTDIR}$(man8dir)/$(PROG).8
