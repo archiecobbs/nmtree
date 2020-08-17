@@ -69,8 +69,8 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `util' library (-lutil). */
-#undef HAVE_LIBUTIL
+/* Define to 1 if you have the `nbcompat' library (-lnbcompat). */
+#undef HAVE_LIBNBCOMPAT
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -81,12 +81,6 @@
 /* Define to 1 if <wchar.h> declares mbstate_t. */
 #undef HAVE_MBSTATE_T
 
-/* Define to 1 if you have the <md5global.h> header file. */
-#undef HAVE_MD5GLOBAL_H
-
-/* Define to 1 if you have the <md5.h> header file. */
-#undef HAVE_MD5_H
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -96,20 +90,26 @@
 /* Define to 1 if you have the `mkdir' function. */
 #undef HAVE_MKDIR
 
+/* Define to 1 if you have the <nbcompat/md5.h> header file. */
+#undef HAVE_NBCOMPAT_MD5_H
+
+/* Define to 1 if you have the <nbcompat/rmd160.h> header file. */
+#undef HAVE_NBCOMPAT_RMD160_H
+
+/* Define to 1 if you have the <nbcompat/sha1.h> header file. */
+#undef HAVE_NBCOMPAT_SHA1_H
+
+/* Define to 1 if you have the <nbcompat/sha2.h> header file. */
+#undef HAVE_NBCOMPAT_SHA2_H
+
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
-/* Define to 1 if you have the <rmd160.h> header file. */
-#undef HAVE_RMD160_H
-
-/* Define to 1 if you have the <sha1.h> header file. */
-#undef HAVE_SHA1_H
-
-/* Define to 1 if you have the <sha2.h> header file. */
-#undef HAVE_SHA2_H
+/* Define to 1 if you have the `SHA256_File' function. */
+#undef HAVE_SHA256_FILE
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
@@ -125,9 +125,6 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
-
-/* Define to 1 if you have the `SHA512_File' function. */
-#undef HAVE_SHA512_FILE
 
 /* Define to 1 if you have the `strchr' function. */
 #undef HAVE_STRCHR
@@ -150,10 +147,10 @@
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
 
-/* Define to 1 if `st_flags' is member of `struct stat'. */
+/* Define to 1 if `st_flags' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_FLAGS
 
-/* Define to 1 if `st_rdev' is member of `struct stat'. */
+/* Define to 1 if `st_rdev' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_RDEV
 
 /* Define to 1 if you have the <sys/cdefs.h> header file. */
@@ -204,12 +201,15 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
+   automatically deduced at runtime.
 	STACK_DIRECTION > 0 => grows toward higher addresses
 	STACK_DIRECTION < 0 => grows toward lower addresses
 	STACK_DIRECTION = 0 => direction of growth unknown */
@@ -236,10 +236,10 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t
 
-/* Define to `long' if <sys/types.h> does not define. */
+/* Define to `long int' if <sys/types.h> does not define. */
 #undef off_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `int' if <sys/types.h> doesn't define. */

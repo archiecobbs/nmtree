@@ -19,7 +19,7 @@ LDFLAGS=	@LDFLAGS@
 
 INSTALL=	@INSTALL@
 
-PROG=		mtree
+PROG=		nmtree
 
 OBJS=	compare.o crc.o create.o excludes.o misc.o mtree.o spec.o verify.o \
 	getid.o stat_flags.o pack_dev.o
@@ -43,4 +43,4 @@ install:
 	$(INSTALL) -m 755 -d ${DESTDIR}$(sbindir)
 	$(INSTALL) -m 755 -d ${DESTDIR}$(man8dir)
 	$(INSTALL) $(PROG) ${DESTDIR}$(sbindir)
-	$(INSTALL) -m 444 $(PROG).8 ${DESTDIR}$(man8dir)/$(PROG).8
+	$(INSTALL) -m 444 mtree.8 ${DESTDIR}$(man8dir)/$(PROG).8

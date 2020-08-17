@@ -1,2 +1,5 @@
-This project is a straight import of NetBSD's mtree utility.
-It contains a straight checkout of the code using CVS.
+This project is a port of NetBSD's mtree utility to Linux.
+
+Notes:
+- Requires the "libnbcompat" library.
+- The name of the program is "nmtree".

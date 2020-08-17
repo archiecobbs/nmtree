@@ -3163,13 +3163,13 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 # Checks for libraries.
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for fparseln in -lutil" >&5
-$as_echo_n "checking for fparseln in -lutil... " >&6; }
-if ${ac_cv_lib_util_fparseln+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for fparseln in -lnbcompat" >&5
+$as_echo_n "checking for fparseln in -lnbcompat... " >&6; }
+if ${ac_cv_lib_nbcompat_fparseln+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lutil  $LIBS"
+LIBS="-lnbcompat  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -3189,22 +3189,22 @@ return fparseln ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_util_fparseln=yes
+  ac_cv_lib_nbcompat_fparseln=yes
 else
-  ac_cv_lib_util_fparseln=no
+  ac_cv_lib_nbcompat_fparseln=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_util_fparseln" >&5
-$as_echo "$ac_cv_lib_util_fparseln" >&6; }
-if test "x$ac_cv_lib_util_fparseln" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_nbcompat_fparseln" >&5
+$as_echo "$ac_cv_lib_nbcompat_fparseln" >&6; }
+if test "x$ac_cv_lib_nbcompat_fparseln" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBUTIL 1
+#define HAVE_LIBNBCOMPAT 1
 _ACEOF
 
-  LIBS="-lutil $LIBS"
+  LIBS="-lnbcompat $LIBS"
 
 fi
 
@@ -3608,7 +3608,7 @@ done
 
 
 for ac_header in ctype.h dirent.h err.h errno.h fcntl.h fnmatch.h fts.h \
-	grp.h limits.h md5.h netdb.h pwd.h rmd160.h sha1.h sha2.h \
+	grp.h limits.h netdb.h pwd.h \
 	stdarg.h stddef.h stdio.h stdlib.h string.h time.h unistd.h \
 	util.h vis.h
 do :
@@ -3624,6 +3624,19 @@ fi
 done
 
 for ac_header in sys/cdefs.h sys/param.h sys/queue.h sys/stat.h sys/types.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in nbcompat/md5.h nbcompat/rmd160.h nbcompat/sha1.h nbcompat/sha2.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -3909,8 +3922,6 @@ else
 # ifdef _MSC_VER
 #  include <malloc.h>
 #  define alloca _alloca
-# elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-#   include <stdlib.h>
 # else
 #  ifdef HAVE_ALLOCA_H
 #   include <alloca.h>

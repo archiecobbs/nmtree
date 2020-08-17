@@ -74,22 +74,28 @@ __RCSID("$NetBSD: compare.c,v 1.7 2013/09/08 16:20:10 ryoon Exp $");
 #ifndef NO_MD5
 #if HAVE_MD5_H
 #include <md5.h>
+#elif HAVE_NBCOMPAT_MD5_H
+#include <nbcompat/md5.h>
 #endif
 #endif
 #ifndef NO_RMD160
 #if HAVE_RMD160_H
 #include <rmd160.h>
+#elif HAVE_NBCOMPAT_RMD160_H
+#include <nbcompat/rmd160.h>
 #endif
 #endif
 #ifndef NO_SHA1
 #if HAVE_SHA1_H
 #include <sha1.h>
+#elif HAVE_NBCOMPAT_SHA1_H
+#include <nbcompat/sha1.h>
 #endif
 #endif
 #ifndef NO_SHA2
 #if HAVE_SHA2_H && HAVE_SHA512_FILE
 #include <sha2.h>
-#else
+#elif HAVE_NBCOMPAT_SHA2
 #include <nbcompat/sha2.h>
 #endif
 #endif
