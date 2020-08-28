@@ -1,10 +1,12 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
-
-AC_PREREQ(2.57)
-AC_INIT([mtree], [20040722], [grant@NetBSD.org])
+AC_PREREQ(2.59)
+AC_INIT([mtree], [1.0.0], [https://github.com/archiecobbs/nmtree/issues])
+AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([mtree.c])
 AC_CONFIG_HEADER([config.h])
+AM_INIT_AUTOMAKE([1.9 foreign])
+
+# Allow changing program name
+AC_ARG_PROGRAM
 
 # Checks for programs.
 AC_PROG_CC
