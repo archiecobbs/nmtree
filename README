@@ -1,5 +1,9 @@
 This project is a port of NetBSD's mtree utility to Linux.
 
 Notes:
-- Requires the "libnbcompat" library.
-- The name of the program is "nmtree".
+
+- Information about the original NetBSD version:
+  https://cdn.netbsd.org/pub/pkgsrc/current/pkgsrc/pkgtools/mtree/README.html
+
+- This build requires the "libnbcompat" library, available here:
+  https://github.com/archiecobbs/libnbcompat
