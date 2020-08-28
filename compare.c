@@ -95,7 +95,7 @@ __RCSID("$NetBSD: compare.c,v 1.7 2013/09/08 16:20:10 ryoon Exp $");
 #ifndef NO_SHA2
 #if HAVE_SHA2_H && HAVE_SHA512_FILE
 #include <sha2.h>
-#elif HAVE_NBCOMPAT_SHA2
+#elif HAVE_NBCOMPAT_SHA2_H
 #include <nbcompat/sha2.h>
 #endif
 #endif
