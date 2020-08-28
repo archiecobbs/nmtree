@@ -19,7 +19,7 @@ noinst_HEADERS=			extern.h \
 				pack_dev.h \
 				stat_flags.h
 
-man_MANS=			mtree.8
+man_MANS=			mtree.5 mtree.8
 
 docdir=		    		$(datadir)/doc/packages/$(PACKAGE)
 
