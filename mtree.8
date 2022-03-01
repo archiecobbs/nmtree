@@ -162,6 +162,13 @@ list.
 Non-directories with tags which are in the inclusion list are printed with
 .Fl D .
 If no inclusion list is provided, the default is to display all files.
+.It Fl g
+Earlier versions contained undocumented behavior whereby input filenames containing
+.Xr glob 7
+characters would be matched using
+.Xr fnmatch 3
+pattern matching.
+This behavior is now disabled by default, but can be re-enabled using this flag.
 .It Fl i
 If specified, set the schg and/or sappnd flags.
 .It Fl K Ar keywords

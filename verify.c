@@ -142,7 +142,7 @@ vwalk(void)
 		if (specdepth != p->fts_level)
 			goto extra;
 		for (ep = level; ep; ep = ep->next)
-			if ((ep->flags & F_MAGIC &&
+			if ((gflag && (ep->flags & F_MAGIC) != 0 &&
 			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME)) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;

@@ -79,7 +79,7 @@ __RCSID("$NetBSD: mtree.c,v 1.3 2004/08/21 04:10:45 jlam Exp $");
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;
-int	cflag, Cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
+int	cflag, Cflag, dflag, Dflag, eflag, gflag, iflag, lflag, mflag,
     	rflag, sflag, tflag, uflag, Uflag;
 char	fullpath[MAXPATHLEN];
 
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 	dir = NULL;
 	init_excludes();
 
-	while ((ch = getopt(argc, argv, "cCdDeE:f:I:ik:K:lLmMN:p:PrR:s:tuUWxX:"))
+	while ((ch = getopt(argc, argv, "cCdDeE:f:I:igk:K:lLmMN:p:PrR:s:tuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -121,6 +121,9 @@ main(int argc, char **argv)
 		case 'f':
 			if (!(freopen(optarg, "r", stdin)))
 				mtree_err("%s: %s", optarg, strerror(errno));
+			break;
+		case 'g':
+			gflag = 1;
 			break;
 		case 'i':
 			iflag = 1;
@@ -242,7 +245,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-cCdDelLMPruUWx] [-i|-m] [-f spec] [-k key]\n"
+	    "usage: %s [-cCdDeglLMPruUWx] [-i|-m] [-f spec] [-k key]\n"
 	    "\t\t[-K addkey] [-R removekey] [-I inctags] [-E exctags]\n"
 	    "\t\t[-N userdbdir] [-X exclude-file] [-p path] [-s seed]\n",
 	    getprogname());
