@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.3 2004/08/21 04:10:45 jlam Exp $	*/
+/*	$NetBSD: mtree.c,v 1.50 2015/01/23 02:27:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -41,15 +41,15 @@
 #include <sys/cdefs.h>
 #endif
 #if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.3 2004/08/21 04:10:45 jlam Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.50 2015/01/23 02:27:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,28 +78,50 @@ __RCSID("$NetBSD: mtree.c,v 1.3 2004/08/21 04:10:45 jlam Exp $");
 
 #include "extern.h"
 
+#ifndef __arraycount
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+#endif
+
 int	ftsoptions = FTS_PHYSICAL;
-int	cflag, Cflag, dflag, Dflag, eflag, gflag, iflag, lflag, mflag,
-    	rflag, sflag, tflag, uflag, Uflag;
+int	bflag, dflag, eflag, iflag, jflag, lflag, mflag, nflag, qflag, rflag,
+	sflag, tflag, uflag;
 char	fullpath[MAXPATHLEN];
 
-	int	main(int, char **);
+static struct {
+	enum flavor flavor;
+	const char name[9];
+} flavors[] = {
+	{F_MTREE, "mtree"},
+	{F_FREEBSD9, "freebsd9"},
+	{F_NETBSD6, "netbsd6"},
+};
+
 static	void	usage(void);
 
 int
 main(int argc, char **argv)
 {
 	int	ch, status;
+	unsigned int	i;
+	int	cflag, Cflag, Dflag, Uflag, wflag;
 	char	*dir, *p;
+	FILE	*spec1, *spec2;
 
 	setprogname(argv[0]);
 
+	cflag = Cflag = Dflag = Uflag = wflag = 0;
 	dir = NULL;
 	init_excludes();
+	spec1 = stdin;
+	spec2 = NULL;
 
-	while ((ch = getopt(argc, argv, "cCdDeE:f:I:igk:K:lLmMN:p:PrR:s:tuUWxX:"))
+	while ((ch = getopt(argc, argv,
+	    "bcCdDeE:f:F:I:ijk:K:lLmMnN:O:p:PqrR:s:StuUwWxX:"))
 	    != -1) {
 		switch((char)ch) {
+		case 'b':
+			bflag = 1;
+			break;
 		case 'c':
 			cflag = 1;
 			break;
@@ -119,17 +141,36 @@ main(int argc, char **argv)
 			eflag = 1;
 			break;
 		case 'f':
-			if (!(freopen(optarg, "r", stdin)))
-				mtree_err("%s: %s", optarg, strerror(errno));
+			if (spec1 == stdin) {
+				spec1 = fopen(optarg, "r");
+				if (spec1 == NULL)
+					mtree_err("%s: %s", optarg,
+					    strerror(errno));
+			} else if (spec2 == NULL) {
+				spec2 = fopen(optarg, "r");
+				if (spec2 == NULL)
+					mtree_err("%s: %s", optarg,
+					    strerror(errno));
+			} else
+				usage();
 			break;
-		case 'g':
-			gflag = 1;
+		case 'F':
+			for (i = 0; i < __arraycount(flavors); i++)
+				if (strcmp(optarg, flavors[i].name) == 0) {
+					flavor = flavors[i].flavor;
+					break;
+				}
+			if (i == __arraycount(flavors))
+				usage();
 			break;
 		case 'i':
 			iflag = 1;
 			break;
 		case 'I':
 			parsetags(&includetags, optarg);
+			break;
+		case 'j':
+			jflag = 1;
 			break;
 		case 'k':
 			keys = F_TYPE;
@@ -155,11 +196,17 @@ main(int argc, char **argv)
 		case 'M':
 			mtree_Mflag = 1;
 			break;
+		case 'n':
+			nflag = 1;
+			break;
 		case 'N':
 			if (! setup_getid(optarg))
 				mtree_err(
 			    "Unable to use user and group databases in `%s'",
 				    optarg);
+			break;
+		case 'O':
+			load_only(optarg);
 			break;
 		case 'p':
 			dir = optarg;
@@ -168,8 +215,11 @@ main(int argc, char **argv)
 			ftsoptions &= ~FTS_LOGICAL;
 			ftsoptions |= FTS_PHYSICAL;
 			break;
+		case 'q':
+			qflag = 1;
+			break;
 		case 'r':
-			rflag = 1;
+			rflag++;
 			break;
 		case 'R':
 			while ((p = strsep(&optarg, " \t,")) != NULL)
@@ -182,6 +232,9 @@ main(int argc, char **argv)
 			if (*p)
 				mtree_err("illegal seed value -- %s", optarg);
 			break;
+		case 'S':
+			mtree_Sflag = 1;
+			break;
 		case 't':
 			tflag = 1;
 			break;
@@ -190,6 +243,9 @@ main(int argc, char **argv)
 			break;
 		case 'U':
 			Uflag = uflag = 1;
+			break;
+		case 'w':
+			wflag = 1;
 			break;
 		case 'W':
 			mtree_Wflag = 1;
@@ -211,6 +267,43 @@ main(int argc, char **argv)
 	if (argc)
 		usage();
 
+	switch (flavor) {
+	case F_FREEBSD9:
+		if (cflag && iflag) {
+			warnx("-c and -i passed, replacing -i with -j for "
+			    "FreeBSD compatibility");
+			iflag = 0;
+			jflag = 1;
+		}
+		if (dflag && !bflag) {
+			warnx("Adding -b to -d for FreeBSD compatibility");
+			bflag = 1;
+		}
+		if (uflag && !iflag) {
+			warnx("Adding -i to -%c for FreeBSD compatibility",
+			    Uflag ? 'U' : 'u');
+			iflag = 1;
+		}
+		if (uflag && !tflag) {
+			warnx("Adding -t to -%c for FreeBSD compatibility",
+			    Uflag ? 'U' : 'u');
+			tflag = 1;
+		}
+		if (wflag)
+			warnx("The -w flag is a no-op");
+		break;
+	default:
+		if (wflag)
+			usage();
+	}
+
+	if (spec2 && (cflag || Cflag || Dflag))
+		mtree_err("Double -f, -c, -C and -D flags are mutually "
+		    "exclusive");
+
+	if (dir && spec2)
+		mtree_err("Double -f and -p flags are mutually exclusive");
+
 	if (dir && chdir(dir))
 		mtree_err("%s: %s", dir, strerror(errno));
 
@@ -227,15 +320,18 @@ main(int argc, char **argv)
 		mtree_err("-l and -u flags are mutually exclusive");
 
 	if (cflag) {
-		cwalk();
+		cwalk(stdout);
 		exit(0);
 	}
 	if (Cflag || Dflag) {
-		dump_nodes("", spec(stdin), Dflag);
+		dump_nodes(stdout, "", spec(spec1), Dflag);
 		exit(0);
 	}
-	status = verify();
-	if (Uflag & (status == MISMATCHEXIT))
+	if (spec2 != NULL)
+		status = mtree_specspec(spec1, spec2);
+	else
+		status = verify(spec1);
+	if (Uflag && (status == MISMATCHEXIT))
 		status = 0;
 	exit(status);
 }
@@ -243,11 +339,18 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
+	unsigned int i;
 
 	fprintf(stderr,
-	    "usage: %s [-cCdDeglLMPruUWx] [-i|-m] [-f spec] [-k key]\n"
-	    "\t\t[-K addkey] [-R removekey] [-I inctags] [-E exctags]\n"
-	    "\t\t[-N userdbdir] [-X exclude-file] [-p path] [-s seed]\n",
+	    "usage: %s [-bCcDdejLlMnPqrStUuWx] [-i|-m] [-E tags]\n"
+	    "\t\t[-f spec] [-f spec]\n"
+	    "\t\t[-I tags] [-K keywords] [-k keywords] [-N dbdir] [-p path]\n"
+	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n"
+	    "\t\t[-F flavor]\n",
 	    getprogname());
+	fprintf(stderr, "\nflavors:");
+	for (i = 0; i < __arraycount(flavors); i++)
+		fprintf(stderr, " %s", flavors[i].name);
+	fprintf(stderr, "\n");
 	exit(1);
 }

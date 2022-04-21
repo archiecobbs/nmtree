@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.3 2008/11/06 02:14:52 jschauma Exp $	*/
+/*	$NetBSD: mtree.h,v 1.31 2012/10/05 09:17:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,9 +39,6 @@
 
 #define	MISMATCHEXIT	2
 
-/* Max. length of hash -- update this if needed when adding a new algorithm. */
-#define	MAXHASHLEN	128 /* SHA512 */
-
 typedef struct _node {
 	struct _node	*parent, *child;	/* up, down */
 	struct _node	*prev, *next;		/* left, right */
@@ -62,7 +59,9 @@ typedef struct _node {
 	char	*sha256digest;			/* SHA256 digest */
 	char	*sha384digest;			/* SHA384 digest */
 	char	*sha512digest;			/* SHA512 digest */
-	char	*tags;				/* tags, comma delimited */
+	char	*tags;				/* tags, comma delimited,
+						 * also with leading and
+						 * trailing commas */
 	size_t	lineno;				/* line # entry came from */
 
 #define	F_CKSUM		0x00000001		/* cksum(1) check sum */
@@ -87,6 +86,8 @@ typedef struct _node {
 #define	F_UID		0x00080000		/* uid */
 #define	F_UNAME		0x00100000		/* user name */
 #define	F_VISIT		0x00200000		/* file visited */
+#define	F_NOCHANGE	0x00400000		/* check existence, but not */
+						/* other properties */
 #define	F_SHA256	0x00800000		/* SHA256 digest */
 #define	F_SHA384	0x01000000		/* SHA384 digest */
 #define	F_SHA512	0x02000000		/* SHA512 digest */
@@ -121,9 +122,26 @@ const char	*inotype(u_int);
 u_int		 nodetoino(u_int);
 int		 setup_getid(const char *);
 NODE		*spec(FILE *);
+int		 mtree_specspec(FILE *, FILE *);
 void		 free_nodes(NODE *);
 char		*vispath(const char *);
 
+#ifdef __FreeBSD__
+#define KEY_DIGEST "digest"
+#else
+#define KEY_DIGEST
+#endif
+
+#define	MD5KEY		"md5"		KEY_DIGEST
+#ifdef __FreeBSD__
+#define	RMD160KEY	"ripemd160"	KEY_DIGEST
+#else
+#define	RMD160KEY	"rmd160"	KEY_DIGEST
+#endif
+#define	SHA1KEY		"sha1"		KEY_DIGEST
+#define	SHA256KEY	"sha256"	KEY_DIGEST
+#define	SHA384KEY	"sha384"
+#define	SHA512KEY	"sha512"
 
 #define	RP(p)	\
 	((p)->fts_path[0] == '.' && (p)->fts_path[1] == '/' ? \

@@ -1,4 +1,4 @@
-/*	$NetBSD: excludes.c,v 1.4 2004/08/21 04:10:45 jlam Exp $	*/
+/*	$NetBSD: excludes.c,v 1.13 2004/06/20 22:20:18 jmc Exp $	*/
 
 /*
  * Copyright 2000 Massachusetts Institute of Technology
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: excludes.c,v 1.4 2004/08/21 04:10:45 jlam Exp $");
+__RCSID("$NetBSD: excludes.c,v 1.13 2004/06/20 22:20:18 jmc Exp $");
 #endif
 
 #if HAVE_SYS_TYPES_H

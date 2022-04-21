@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 2008/11/06 02:14:52 jschauma Exp $	*/
+/*	$NetBSD: misc.c,v 1.34 2012/12/20 19:09:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #endif
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.3 2008/11/06 02:14:52 jschauma Exp $");
+__RCSID("$NetBSD: misc.c,v 1.34 2012/12/20 19:09:25 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_SYS_TYPES_H
@@ -68,6 +68,8 @@ __RCSID("$NetBSD: misc.c,v 1.3 2008/11/06 02:14:52 jschauma Exp $");
 
 #include "extern.h"
 
+enum flavor	flavor = F_MTREE;
+
 typedef struct _key {
 	const char	*name;		/* key name */
 	u_int		val;		/* value */
@@ -89,7 +91,9 @@ static KEY keylist[] = {
 	{"md5digest",	F_MD5,		NEEDVALUE},
 	{"mode",	F_MODE,		NEEDVALUE},
 	{"nlink",	F_NLINK,	NEEDVALUE},
+	{"nochange",	F_NOCHANGE,	0},
 	{"optional",	F_OPT,		0},
+	{"ripemd160digest", F_RMD160,	NEEDVALUE},
 	{"rmd160",	F_RMD160,	NEEDVALUE},
 	{"rmd160digest",F_RMD160,	NEEDVALUE},
 	{"sha1",	F_SHA1,		NEEDVALUE},
@@ -134,7 +138,7 @@ parsekey(const char *name, int *needvaluep)
 	KEY *k, tmp;
 
 	if (allbits == 0) {
-		int i;
+		size_t i;
 
 		for (i = 0; i < sizeof(keylist) / sizeof(KEY); i++)
 			allbits |= keylist[i].val;

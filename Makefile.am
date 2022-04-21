@@ -1,28 +1,34 @@
 # vim: noet:sw=8:ts=8:
 
-bin_PROGRAMS=			mtree
+bin_PROGRAMS = mtree
 
-mtree_SOURCES=			compare.c \
-				crc.c \
-				create.c \
-				excludes.c \
-				getid.c \
-				misc.c \
-				mtree.c \
-				pack_dev.c \
-				spec.c \
-				stat_flags.c \
-				verify.c
+mtree_SOURCES = \
+	compare.c \
+	crc.c \
+	create.c \
+	excludes.c \
+	getid.c \
+	misc.c \
+	mtree.c \
+	only.c \
+	pack_dev.c \
+	spec.c \
+	specspec.c \
+	stat_flags.c \
+	verify.c
 
-noinst_HEADERS=			extern.h \
-				mtree.h \
-				pack_dev.h \
-				stat_flags.h
+noinst_HEADERS = \
+	extern.h \
+	mtree.h \
+	pack_dev.h \
+	stat_flags.h
 
-man_MANS=			mtree.5 mtree.8
+man_MANS = \
+	mtree.5 \
+	mtree.8
 
-docdir=		    		$(datadir)/doc/packages/$(PACKAGE)
+docdir = \
+	$(datadir)/doc/packages/$(PACKAGE)
+doc_DATA = README
 
-doc_DATA=	    		README
-
-EXTRA_DIST=	    		$(man_MANS)
+EXTRA_DIST = $(man_MANS)

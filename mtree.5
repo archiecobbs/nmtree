@@ -9,7 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -133,7 +133,6 @@ or
 .Sy char
 file types.
 The value must be one of the following forms:
-.Pp
 .Bl -tag -width 4n
 .It Ar format , Ns Ar major , Ns Ar minor Ns Bo , Ns Ar subunit Bc
 A device with
@@ -165,8 +164,8 @@ are recognized:
 .Sy solaris ,
 .Sy sunos ,
 .Sy svr3 ,
-.Sy svr4 ,  
-and 
+.Sy svr4 ,
+and
 .Sy ultrix .
 .Pp
 See
@@ -288,12 +287,10 @@ The file owner as a numeric value.
 .It Cm uname
 The file owner as a symbolic name.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr find 1 ,
 .Xr mtree 8
-.Sh BUGS
 .Sh HISTORY
 The
 .Nm
