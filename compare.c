@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.7 2013/09/08 16:20:10 ryoon Exp $	*/
+/*	$NetBSD: compare.c,v 1.60 2021/04/03 13:37:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -44,12 +44,15 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.7 2013/09/08 16:20:10 ryoon Exp $");
+__RCSID("$NetBSD: compare.c,v 1.60 2021/04/03 13:37:18 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
 #endif
 
 #if HAVE_ERRNO_H
@@ -60,6 +63,12 @@ __RCSID("$NetBSD: compare.c,v 1.7 2013/09/08 16:20:10 ryoon Exp $");
 #endif
 #if HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#if HAVE_STDLIB_H
+#include <stdlib.h>
 #endif
 #if HAVE_STRING_H
 #include <string.h>
@@ -106,13 +115,18 @@ __RCSID("$NetBSD: compare.c,v 1.7 2013/09/08 16:20:10 ryoon Exp $");
 #define	INDENTNAMELEN	8
 #define MARK								\
 do {									\
-	len = printf("%s: ", RP(p));					\
-	if (len > INDENTNAMELEN) {					\
+	if (flavor == F_FREEBSD9) {					\
+		len = printf("%s changed\n", RP(p));			\
 		tab = "\t";						\
-		printf("\n");						\
 	} else {							\
-		tab = "";						\
-		printf("%*s", INDENTNAMELEN - (int)len, "");		\
+		len = printf("%s: ", RP(p));				\
+		if (len > INDENTNAMELEN) {				\
+			tab = "\t";					\
+			printf("\n");					\
+		} else {						\
+			tab = "";					\
+			printf("%*s", INDENTNAMELEN - (int)len, "");	\
+		}							\
 	}								\
 } while (0)
 #define	LABEL if (!label++) MARK
@@ -122,18 +136,22 @@ do {									\
 
 #define CHANGEFLAGS							\
 	if (flags != p->fts_statp->st_flags) {				\
+		char *sf;						\
 		if (!label) {						\
 			MARK;						\
-			printf("%sflags (\"%s\"", tab,			\
-			    flags_to_string(p->fts_statp->st_flags, "none")); \
+			sf = flags_to_string(p->fts_statp->st_flags, "none"); \
+			printf("%sflags (\"%s\"", tab, sf);		\
+			free(sf);					\
 		}							\
 		if (lchflags(p->fts_accpath, flags)) {			\
 			label++;					\
 			printf(", not modified: %s)\n",			\
 			    strerror(errno));				\
-		} else							\
-			printf(", modified to \"%s\")\n",		\
-			     flags_to_string(flags, "none"));		\
+		} else {						\
+			sf = flags_to_string(flags, "none");		\
+			printf(", modified to \"%s\")\n", sf);		\
+			free(sf);					\
+		}							\
 	}
 
 /* SETFLAGS:
@@ -165,13 +183,15 @@ compare(NODE *s, FTSENT *p)
 	uint32_t flags;
 #endif
 	int fd, label;
+	bool was_unlinked;
 	const char *cp, *tab;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
-	char digestbuf[MAXHASHLEN + 1];
+	char *digestbuf;
 #endif
 
 	tab = NULL;
 	label = 0;
+	was_unlinked = false;
 	switch(s->type) {
 	case F_BLOCK:
 		if (!S_ISBLK(p->fts_statp->st_mode))
@@ -204,7 +224,8 @@ compare(NODE *s, FTSENT *p)
 		break;
 #endif
 typeerr:		LABEL;
-		printf("\ttype (%s, %s)\n",
+		printf(flavor == F_FREEBSD9 ?
+		    "\ttype expected %s found %s\n" : "\ttype (%s, %s)\n",
 		    nodetype(s->type), inotype(p->fts_statp->st_mode));
 		return (label);
 	}
@@ -226,56 +247,73 @@ typeerr:		LABEL;
 	    (s->type == F_BLOCK || s->type == F_CHAR) &&
 	    s->st_rdev != p->fts_statp->st_rdev) {
 		LABEL;
-		printf("%sdevice (%#lx, %#lx",
-		    tab, (unsigned long)s->st_rdev, (unsigned long)p->fts_statp->st_rdev);
+		printf(flavor == F_FREEBSD9 ?
+		    "%sdevice expected %#jx found %#jx" :
+		    "%sdevice (%#jx, %#jx",
+		    tab, (uintmax_t)s->st_rdev,
+		    (uintmax_t)p->fts_statp->st_rdev);
 		if (uflag) {
 			if ((unlink(p->fts_accpath) == -1) ||
 			    (mknod(p->fts_accpath,
 			      s->st_mode | nodetoino(s->type),
 			      s->st_rdev) == -1) ||
 			    (lchown(p->fts_accpath, p->fts_statp->st_uid,
-			      p->fts_statp->st_gid) == -1) )
-				printf(", not modified: %s)\n",
-				    strerror(errno));
-			 else
-				printf(", modified)\n");
+			      p->fts_statp->st_gid) == -1) ) {
+				printf(", not modified: %s%s\n",
+				    strerror(errno),
+				    flavor == F_FREEBSD9 ? "" : ")");
+			} else {
+				printf(", modified%s\n",
+				    flavor == F_FREEBSD9 ? "" : ")");
+				was_unlinked = true;
+			}
 		} else
 			printf(")\n");
 		tab = "\t";
 	}
 	/* Set the uid/gid first, then set the mode. */
-	if (s->flags & (F_UID | F_UNAME) && s->st_uid != p->fts_statp->st_uid) {
+	if (s->flags & (F_UID | F_UNAME) &&
+	    (was_unlinked || s->st_uid != p->fts_statp->st_uid)) {
 		LABEL;
-		printf("%suser (%lu, %lu",
+		printf(flavor == F_FREEBSD9 ?
+		    "%suser expected %lu found %lu" : "%suser (%lu, %lu",
 		    tab, (u_long)s->st_uid, (u_long)p->fts_statp->st_uid);
 		if (uflag) {
 			if (lchown(p->fts_accpath, s->st_uid, -1))
-				printf(", not modified: %s)\n",
-				    strerror(errno));
+				printf(", not modified: %s%s\n",
+				    strerror(errno),
+				    flavor == F_FREEBSD9 ? "" : ")");
 			else
-				printf(", modified)\n");
+				printf(", modified%s%s\n",
+				    was_unlinked ? " by unlink" : "",
+				    flavor == F_FREEBSD9 ? "" : ")");
 		} else
 			printf(")\n");
 		tab = "\t";
 	}
-	if (s->flags & (F_GID | F_GNAME) && s->st_gid != p->fts_statp->st_gid) {
+	if (s->flags & (F_GID | F_GNAME) &&
+	    (was_unlinked || s->st_gid != p->fts_statp->st_gid)) {
 		LABEL;
-		printf("%sgid (%lu, %lu",
+		printf(flavor == F_FREEBSD9 ?
+		    "%sgid expected %lu found %lu" : "%sgid (%lu, %lu",
 		    tab, (u_long)s->st_gid, (u_long)p->fts_statp->st_gid);
 		if (uflag) {
 			if (lchown(p->fts_accpath, -1, s->st_gid))
-				printf(", not modified: %s)\n",
-				    strerror(errno));
+				printf(", not modified: %s%s\n",
+				    strerror(errno),
+				    flavor == F_FREEBSD9 ? "" : ")");
 			else
-				printf(", modified)\n");
+				printf(", modified%s%s\n",
+				    was_unlinked ? " by unlink" : "",
+				    flavor == F_FREEBSD9 ? "" : ")");
 		}
 		else
 			printf(")\n");
 		tab = "\t";
 	}
 	if (s->flags & F_MODE &&
-	    s->st_mode != (p->fts_statp->st_mode & MBITS)) {
-		if (lflag) {
+	    (was_unlinked || s->st_mode != (p->fts_statp->st_mode & MBITS))) {
+		if (lflag && !was_unlinked) {
 			mode_t tmode, mode;
 
 			tmode = s->st_mode;
@@ -292,15 +330,20 @@ typeerr:		LABEL;
 		}
 
 		LABEL;
-		printf("%spermissions (%#lo, %#lo",
+		printf(flavor == F_FREEBSD9 ?
+		    "%spermissions expcted %#lo found %#lo" :
+		    "%spermissions (%#lo, %#lo",
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);
 		if (uflag) {
 			if (lchmod(p->fts_accpath, s->st_mode))
-				printf(", not modified: %s)\n",
-				    strerror(errno));
+				printf(", not modified: %s%s\n",
+				    strerror(errno),
+				    flavor == F_FREEBSD9 ? "" : ")");
 			else
-				printf(", modified)\n");
+				printf(", modified%s%s\n",
+				    was_unlinked ? " by unlink" : "",
+				    flavor == F_FREEBSD9 ? "" : ")");
 		}
 		else
 			printf(")\n");
@@ -310,15 +353,18 @@ typeerr:		LABEL;
 	if (s->flags & F_NLINK && s->type != F_DIR &&
 	    s->st_nlink != p->fts_statp->st_nlink) {
 		LABEL;
-		printf("%slink count (%lu, %lu)\n",
+		printf(flavor == F_FREEBSD9 ?
+		    "%slink count expected %lu found %lu\n" :
+		    "%slink count (%lu, %lu)\n",
 		    tab, (u_long)s->st_nlink, (u_long)p->fts_statp->st_nlink);
 		tab = "\t";
 	}
 	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
 		LABEL;
-		printf("%ssize (%lld, %lld)\n",
-		    tab, (long long)s->st_size,
-		    (long long)p->fts_statp->st_size);
+		printf(flavor == F_FREEBSD9 ?
+		    "%ssize expected %ju found %ju\n" : "%ssize (%ju, %ju)\n",
+		    tab, (uintmax_t)s->st_size,
+		    (uintmax_t)p->fts_statp->st_size);
 		tab = "\t";
 	}
 	/*
@@ -333,26 +379,40 @@ typeerr:		LABEL;
 		struct timeval tv[2];
 		struct stat *ps = p->fts_statp;
 		time_t smtime = s->st_mtimespec.tv_sec;
-		time_t pmtime = ps->st_mtim.tv_sec;
+
+#if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
+		time_t pmtime = ps->st_mtimespec.tv_sec;
 
 		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
-		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtim);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtimespec);
+#else
+		time_t pmtime = (time_t)ps->st_mtime;
+
+		tv[0].tv_sec = smtime;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = pmtime;
+		tv[1].tv_usec = 0;
+#endif
 
 		if (tv[0].tv_sec != tv[1].tv_sec ||
 		    tv[0].tv_usec != tv[1].tv_usec) {
 			LABEL;
-			printf("%smodification time (%.24s, ",
+			printf(flavor == F_FREEBSD9 ?
+			    "%smodification time expected %.24s found " :
+			    "%smodification time (%.24s, ",
 			    tab, ctime(&smtime));
 			printf("%.24s", ctime(&pmtime));
 			if (tflag) {
 				tv[1] = tv[0];
 				if (utimes(p->fts_accpath, tv))
-					printf(", not modified: %s)\n",
-					    strerror(errno));
+					printf(", not modified: %s%s\n",
+					    strerror(errno),
+					    flavor == F_FREEBSD9 ? "" : ")");
 				else
-					printf(", modified)\n");
+					printf(", modified%s\n",
+					    flavor == F_FREEBSD9 ? "" : ")");
 			} else
-				printf(")\n");
+				printf("%s\n", flavor == F_FREEBSD9 ? "" : ")");
 			tab = "\t";
 		}
 	}
@@ -366,11 +426,16 @@ typeerr:		LABEL;
         if ((s->flags & F_FLAGS) && ((s->st_flags != p->fts_statp->st_flags)
 	    || mflag || iflag)) {
 		if (s->st_flags != p->fts_statp->st_flags) {
+			char *f_s;
 			LABEL;
-			printf("%sflags (\"%s\" is not ", tab,
-			    flags_to_string(s->st_flags, "none"));
-			printf("\"%s\"",
-			    flags_to_string(p->fts_statp->st_flags, "none"));
+			f_s = flags_to_string(s->st_flags, "none");
+			printf(flavor == F_FREEBSD9 ?
+			    "%sflags expected \"%s\" found " :
+			    "%sflags (\"%s\" is not ", tab, f_s);
+			free(f_s);
+			f_s = flags_to_string(p->fts_statp->st_flags, "none");
+			printf("\"%s\"", f_s);
+			free(f_s);
 		}
 		if (uflag) {
 			if (iflag)
@@ -380,7 +445,7 @@ typeerr:		LABEL;
 			else
 				SETFLAGS(0, (~SP_FLGS & CH_MASK));
 		} else
-			printf(")\n");
+			printf("%s\n", flavor == F_FREEBSD9 ? "" : ")");
 		tab = "\t";
 	}
 #endif	/* HAVE_STRUCT_STAT_ST_FLAGS */
@@ -406,7 +471,9 @@ typeerr:		LABEL;
 			close(fd);
 			if (s->cksum != val) {
 				LABEL;
-				printf("%scksum (%lu, %lu)\n",
+				printf(flavor == F_FREEBSD9 ?
+				    "%scksum expected %lu found %lu\n" :
+				    "%scksum (%lu, %lu)\n",
 				    tab, s->cksum, (unsigned long)val);
 			}
 			tab = "\t";
@@ -414,115 +481,139 @@ typeerr:		LABEL;
 	}
 #ifndef NO_MD5
 	if (s->flags & F_MD5) {
-		if (MD5File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = MD5File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%smd5: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, MD5KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->md5digest, digestbuf)) {
 				LABEL;
-				printf("%smd5 (0x%s, 0x%s)\n",
-				    tab, s->md5digest, digestbuf);
+				printf(flavor == F_FREEBSD9 ?
+				    "%s%s expected %s found %s\n" :
+				    "%s%s (0x%s, 0x%s)\n",
+				    tab, MD5KEY, s->md5digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_MD5 */
 #ifndef NO_RMD160
 	if (s->flags & F_RMD160) {
-		if (RMD160File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = RMD160File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%srmd160: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, RMD160KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->rmd160digest, digestbuf)) {
 				LABEL;
-				printf("%srmd160 (0x%s, 0x%s)\n",
-				    tab, s->rmd160digest, digestbuf);
+				printf(flavor == F_FREEBSD9 ?
+				    "%s%s expected %s found %s\n" :
+				    "%s%s (0x%s, 0x%s)\n",
+				    tab, RMD160KEY, s->rmd160digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_RMD160 */
 #ifndef NO_SHA1
 	if (s->flags & F_SHA1) {
-		if (SHA1File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA1File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha1: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA1KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha1digest, digestbuf)) {
 				LABEL;
-				printf("%ssha1 (0x%s, 0x%s)\n",
-				    tab, s->sha1digest, digestbuf);
+				printf(flavor == F_FREEBSD9 ?
+				    "%s%s expected %s found %s\n" :
+				    "%s%s (0x%s, 0x%s)\n",
+				    tab, SHA1KEY, s->sha1digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_SHA1 */
 #ifndef NO_SHA2
 	if (s->flags & F_SHA256) {
-		if (SHA256_File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA256_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha256: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA256KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha256digest, digestbuf)) {
 				LABEL;
-				printf("%ssha256 (0x%s, 0x%s)\n",
-				    tab, s->sha256digest, digestbuf);
+				printf(flavor == F_FREEBSD9 ?
+				    "%s%s expected %s found %s\n" :
+				    "%s%s (0x%s, 0x%s)\n",
+				    tab, SHA256KEY, s->sha256digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
+#ifdef SHA384_BLOCK_LENGTH
 	if (s->flags & F_SHA384) {
-		if (SHA384_File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA384_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha384: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA384KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha384digest, digestbuf)) {
 				LABEL;
-				printf("%ssha384 (0x%s, 0x%s)\n",
-				    tab, s->sha384digest, digestbuf);
+				printf(flavor == F_FREEBSD9 ?
+				    "%s%s expected %s found %s\n" :
+				    "%s%s (0x%s, 0x%s)\n",
+				    tab, SHA384KEY, s->sha384digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
+#endif
 	if (s->flags & F_SHA512) {
-		if (SHA512_File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA512_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha512: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA512KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha512digest, digestbuf)) {
 				LABEL;
-				printf("%ssha512 (0x%s, 0x%s)\n",
-				    tab, s->sha512digest, digestbuf);
+				printf(flavor == F_FREEBSD9 ?
+				    "%s%s expected %s found %s\n" :
+				    "%s%s (0x%s, 0x%s)\n",
+				    tab, SHA512KEY, s->sha512digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_SHA2 */
 	if (s->flags & F_SLINK &&
 	    strcmp(cp = rlink(p->fts_accpath), s->slink)) {
 		LABEL;
-		printf("%slink ref (%s, %s", tab, cp, s->slink);
+		printf(flavor == F_FREEBSD9 ?
+		    "%slink ref expected %s found %s" :
+		    "%slink ref (%s, %s", tab, cp, s->slink);
 		if (uflag) {
 			if ((unlink(p->fts_accpath) == -1) ||
 			    (symlink(s->slink, p->fts_accpath) == -1) )
-				printf(", not modified: %s)\n",
-				    strerror(errno));
+				printf(", not modified: %s%s\n",
+				    strerror(errno),
+				    flavor == F_FREEBSD9 ? "" : ")");
 			else
-				printf(", modified)\n");
+				printf(", modified%s\n",
+				    flavor == F_FREEBSD9 ? "" : ")");
 		} else
-			printf(")\n");
+			printf("%s\n", flavor == F_FREEBSD9 ? "" : ")");
 	}
 	return (label);
 }

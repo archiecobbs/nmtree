@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.5 2010/03/21 16:30:17 joerg Exp $	*/
+/*	$NetBSD: crc.c,v 1.10 2021/03/18 20:02:18 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.5 2010/03/21 16:30:17 joerg Exp $");
+__RCSID("$NetBSD: crc.c,v 1.10 2021/03/18 20:02:18 cheusov Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,6 @@ static const uint32_t crctab[] = {
  * locations to store the crc and the number of bytes read.  It returns 0 on
  * success and 1 on failure.  Errno is set on failure.
  */
-extern int sflag;
 uint32_t crc_total = ~0;		/* The crc over a number of files. */
 
 int

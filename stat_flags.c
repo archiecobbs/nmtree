@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.5 2011/07/27 15:31:00 seb Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -48,7 +48,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.5 2011/07/27 15:31:00 seb Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,9 @@ __RCSID("$NetBSD: stat_flags.c,v 1.5 2011/07/27 15:31:00 seb Exp $");
 #if HAVE_STRING_H
 #include <string.h>
 #endif
+#if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 
 #include "stat_flags.h"
 
@@ -75,7 +78,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.5 2011/07/27 15:31:00 seb Exp $");
 		(void)strlcat(string, prefix, sizeof(string));		\
 	(void)strlcat(string, s, sizeof(string));			\
 	prefix = ",";							\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 /*
  * flags_to_string --
@@ -85,7 +88,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.5 2011/07/27 15:31:00 seb Exp $");
 char *
 flags_to_string(u_long flags, const char *def)
 {
-	static char string[128];
+	char string[128];
 	const char *prefix;
 
 	string[0] = '\0';
@@ -110,9 +113,9 @@ flags_to_string(u_long flags, const char *def)
 		SAPPEND("snap");
 #endif
 #endif
-	if (prefix == NULL)
-		strlcpy(string, def, sizeof(string));
-	return (string);
+	if (prefix != NULL)
+		return strdup(string);
+	return strdup(def);
 }
 
 #define	TEST(a, b, f) {							\
