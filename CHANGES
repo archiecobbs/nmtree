@@ -1,3 +1,7 @@
+Version Next
+
+    - Fix bug with timestamps after 2038.
+
 Version 1.0.0 released August 28, 2020
 
     - Initial release

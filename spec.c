@@ -385,7 +385,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 		if (MATCHFLAG(F_SIZE))
 			printf("size=%lld ", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			printf("time=%ld.%09ld ", (long)cur->st_mtimespec.tv_sec, (long)cur->st_mtimespec.tv_nsec);
+			printf("time=%ju.%09ld ", (uintmax_t)cur->st_mtimespec.tv_sec, (long)cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
 			printf("cksum=%lu ", cur->cksum);
 		if (MATCHFLAG(F_MD5))
@@ -631,7 +631,7 @@ set(char *t, NODE *ip)
 			break;
 		case F_TIME:
 			ip->st_mtimespec.tv_sec =
-			    (time_t)strtoul(val, &ep, 10);
+			    (time_t)strtoull(val, &ep, 10);
 			if (*ep != '.')
 				mtree_err("invalid time `%s'", val);
 			val = ep + 1;
