@@ -463,7 +463,7 @@ parsedev(char *arg)
 			mtree_err("not enough arguments");
 		result = (*pack)(argc, numbers, &error);
 		if (error != NULL)
-			mtree_err(error);
+			mtree_err("%s",error);
 	} else {
 		result = (dev_t)strtoul(arg, &ep, 0);
 		if (*ep != '\0')
